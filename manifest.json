@@ -1,0 +1,11 @@
+{
+  "name": "NEON//VFD",
+  "description": "Turns the playback bar into a 2000s car stereo VFD: 16-segment text with ghost segments and marquee, built-in controls, dot-matrix for Japanese/Korean, dark charcoal with cyan neon.",
+  "preview": "preview.png",
+  "readme": "README.md",
+  "usercss": "NeonVFD/user.css",
+  "schemes": "NeonVFD/color.ini",
+  "include": ["https://pdrccx.github.io/spicetify-neon-vfd/NeonVFD/theme.js"],
+  "authors": [{ "name": "Pedro", "url": "https://github.com/pdrccx" }],
+  "tags": ["dark", "neon", "retro", "vfd", "16-segment"]
+}

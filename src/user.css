@@ -1,0 +1,376 @@
+/* NEON//VFD para Spotify (Spicetify).
+   Tokens del tema "neon" del Cordero Design System, con prefijo --nvfd- para no
+   chocar con las variables de Spotify. Las fuentes las incrusta build.mjs. */
+
+/* @@FONTS@@ */
+
+:root {
+  --nvfd-bg: #0a0a0d;
+  --nvfd-surface: #16161c;
+  --nvfd-border: #2d2d3a;
+  --nvfd-border-strong: #c8c8d0;
+  --nvfd-text: #f2f2f0;
+  --nvfd-muted: #9a9aa5;
+  --nvfd-accent: #00f0ff;        /* relleno y texto (en el tema oscuro valen igual) */
+  --nvfd-accent-2: #ff9d3d;
+  --nvfd-glow: 0 0 12px rgba(0, 240, 255, 0.35);
+  --nvfd-radius: 8px;
+  --nvfd-radius-sm: 4px;
+  --nvfd-dur-fast: 140ms;
+  --nvfd-dur: 220ms;
+  --nvfd-ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+
+  --nvfd-font-display: "Orbitron", "Rajdhani", system-ui, sans-serif;
+  --nvfd-font-body: "Inter", system-ui, sans-serif;
+  --nvfd-font-mono: "JetBrains Mono", ui-monospace, monospace;
+
+  --nvfd-s-1: 4px; --nvfd-s-3: 12px;
+}
+
+/* ------------------------------------------------------------ tipografía */
+
+body,
+button,
+input,
+.encore-text {
+  font-family: var(--nvfd-font-body) !important;
+}
+
+/* Títulos grandes (álbum, playlist, artista) en Orbitron. */
+.main-entityHeader-title h1,
+.main-entityHeader-title .encore-text,
+.encore-text-headline-large,
+.encore-text-headline-medium {
+  font-family: var(--nvfd-font-display) !important;
+  letter-spacing: 0.02em;
+}
+
+/* Tiempos de la barra en monoespaciada, como datos de equipo (se ven sin el display). */
+[data-testid="playback-position"],
+[data-testid="playback-duration"] {
+  font-family: var(--nvfd-font-mono) !important;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Canción que suena en una lista: barra cian a la izquierda (no solo color).
+   Spotify marca su título con el color "bright-accent". */
+[data-testid="tracklist-row"] { transition: box-shadow var(--nvfd-dur-fast); }
+[data-testid="tracklist-row"]:hover { box-shadow: inset 3px 0 0 var(--nvfd-border-strong); }
+[data-testid="tracklist-row"]:has(.encore-internal-color-text-bright-accent) {
+  box-shadow: inset 4px 0 0 var(--nvfd-accent);
+}
+
+/* Enlace activo de la biblioteca: barra de acento. */
+.main-yourLibraryX-navLinkActive { box-shadow: inset 4px 0 0 var(--nvfd-accent); }
+
+/* Foco de teclado visible siempre. */
+:focus-visible {
+  outline: 2px solid var(--nvfd-accent) !important;
+  outline-offset: 2px;
+}
+
+/* ------------------------------------------------------------ display VFD */
+/* El display va dentro de la barra de abajo, que es el panel VFD (ver "barra
+   completa"): aquí solo se acomodan sus partes. */
+
+.nvfd {
+  position: relative;
+  display: grid;
+  /* controles | texto (nunca menos de ~9 caracteres) | medidor | tiempo */
+  grid-template-columns: auto minmax(150px, 1fr) auto auto;
+  align-items: center;
+  gap: var(--nvfd-s-3);
+  width: 100%;
+  padding: 2px 0;
+  box-sizing: border-box;
+}
+.nvfd-cell { display: flex; flex-direction: column; gap: var(--nvfd-s-1); min-width: 0; }
+.nvfd-label {
+  font-family: var(--nvfd-font-mono); font-size: 12px; line-height: 1;
+  letter-spacing: 0.14em; color: var(--nvfd-accent-2);
+}
+.nvfd-host { color: var(--nvfd-accent); }
+
+.nvfd .seg16 { display: block; height: 26px; width: auto; max-width: 100%; overflow: visible; filter: drop-shadow(0 0 3px currentColor); }
+.nvfd .seg16 .seg { fill: currentColor; opacity: 0.08; transition: opacity var(--nvfd-dur-fast) linear; }
+.nvfd .seg16 .seg.on { opacity: 1; }
+
+/* Matriz de puntos (kanji, kana, hangul): misma altura y brillo que los segmentos. */
+.nvfd-host[hidden] { display: none; }
+.nvfd .dotmatrix { display: block; width: 100%; height: 26px; filter: drop-shadow(0 0 3px currentColor); }
+
+.nvfd-flags { display: flex; gap: var(--nvfd-s-3); font-family: var(--nvfd-font-mono); font-size: 12px; line-height: 1; letter-spacing: 0.1em; white-space: nowrap; }
+.nvfd-flag { color: var(--nvfd-accent); opacity: 0.12; transition: opacity var(--nvfd-dur-fast) linear; }
+.nvfd-flag.on { opacity: 1; text-shadow: var(--nvfd-glow); }
+.nvfd-flag-amber { color: var(--nvfd-accent-2); }
+
+.nvfd-levels { width: 80px; height: 34px; align-self: center; }
+/* Sin análisis de la canción, el medidor se atenúa en vez de fingir. */
+.nvfd-no-analysis .nvfd-levels { opacity: 0.35; }
+
+.nvfd-time {
+  all: unset; cursor: pointer;
+  display: flex; flex-direction: column; align-items: flex-end; gap: var(--nvfd-s-1);
+  border-radius: var(--nvfd-radius-sm);
+}
+.nvfd-time:hover .nvfd-label { color: var(--nvfd-text); }
+.nvfd-time:focus-visible { outline: 2px solid var(--nvfd-accent); outline-offset: 2px; }
+
+/* Los controles de Spotify se esconden: el display trae los suyos. */
+.nvfd-mounted [data-testid="general-controls"],
+.nvfd-mounted .player-controls__buttons {
+  display: none !important;
+}
+
+/* Botones dentro del display: íconos cian que brillan, sin fondo. */
+.nvfd-transport { display: flex; align-items: center; gap: 2px; }
+.nvfd-btn {
+  position: relative;
+  display: inline-grid; place-items: center;
+  width: 32px; height: 32px; padding: 0;
+  background: none; border: 0; border-radius: 50%;
+  color: var(--nvfd-accent); opacity: 0.6; cursor: pointer;
+  transition: opacity var(--nvfd-dur-fast) var(--nvfd-ease), transform var(--nvfd-dur-fast) var(--nvfd-ease);
+}
+.nvfd-btn svg {
+  width: 55%; height: 55%;
+  fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 0 2px currentColor);
+}
+.nvfd-btn svg .fill { fill: currentColor; stroke: none; }
+.nvfd-btn:hover { opacity: 1; }
+.nvfd-btn:hover svg { filter: drop-shadow(0 0 6px currentColor); }
+.nvfd-btn:active { transform: scale(0.92); }
+.nvfd-btn:focus-visible { outline: 2px solid var(--nvfd-accent); outline-offset: 2px; }
+/* Aleatorio y repetir: apagados = fantasma; encendidos = ámbar + LED (no solo color). */
+.nvfd-btn[aria-pressed="false"] { opacity: 0.3; }
+.nvfd-btn[aria-pressed="false"]:hover { opacity: 0.8; }
+.nvfd-btn[aria-pressed="true"] { opacity: 1; color: var(--nvfd-accent-2); }
+.nvfd-btn[aria-pressed="true"]::after {
+  content: ""; position: absolute; bottom: 0; left: 50%;
+  width: 4px; height: 4px; margin-left: -2px; border-radius: 50%;
+  background: var(--nvfd-accent-2); box-shadow: 0 0 8px var(--nvfd-accent-2);
+}
+.nvfd-rpt1 {
+  position: absolute; top: 14%; right: 10%;
+  font-family: var(--nvfd-font-mono); font-size: 10px; line-height: 1; display: none;
+}
+.nvfd-btn[data-mode="one"] .nvfd-rpt1 { display: block; }
+/* Play: aro encendido, es la acción principal. */
+.nvfd-btn-play {
+  width: 38px; height: 38px; opacity: 1;
+  border: 1px solid var(--nvfd-accent);
+  box-shadow: var(--nvfd-glow), inset var(--nvfd-glow);
+}
+.nvfd-btn-play .nvfd-icon-pause, .nvfd-btn-play.is-playing .nvfd-icon-play { display: none; }
+.nvfd-btn-play.is-playing .nvfd-icon-pause { display: block; }
+
+/* Encendido VFD al cambiar de canción. */
+.nvfd-flash .nvfd-host { animation: nvfd-on 380ms steps(4, end); }
+@keyframes nvfd-on {
+  0% { opacity: 0.2; } 40% { opacity: 1; } 60% { opacity: 0.4; } 100% { opacity: 1; }
+}
+
+/* Con el display montado, los tiempos de Spotify sobran (el VFD ya los muestra). */
+.nvfd-mounted [data-testid="playback-position"],
+.nvfd-mounted [data-testid="playback-duration"] {
+  visibility: hidden;
+}
+
+/* ------------------------------------------------------------ barra completa
+   Toda la barra de abajo es un solo panel VFD, de lado a lado, y los botones de
+   la derecha toman el mismo estilo. Probado en vivo en Spotify 1.3.3. */
+.nvfd-mounted .main-nowPlayingBar-nowPlayingBar {
+  position: relative;
+  height: auto !important;
+  min-height: 72px;
+  align-items: center;
+  gap: 12px;
+  padding: 6px 12px;
+  background: var(--nvfd-bg) !important;
+  border: 1px solid var(--nvfd-border);
+  border-radius: var(--nvfd-radius-sm);
+  box-shadow: inset 0 0 24px rgba(0, 0, 0, 0.8);
+  overflow: hidden;
+}
+.nvfd-mounted .main-nowPlayingBar-nowPlayingBar::after {
+  content: ""; position: absolute; inset: 0; pointer-events: none;
+  background: repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.04) 0 1px, transparent 1px 3px);
+}
+.nvfd-mounted [data-testid="now-playing-bar"] { height: auto !important; }
+
+/* Izquierda angosta, centro se estira, derecha a su tamaño */
+.nvfd-mounted .main-nowPlayingBar-left { flex: 0 1 260px !important; width: auto !important; min-width: 160px; }
+.nvfd-mounted .main-nowPlayingBar-center { flex: 1 1 auto !important; width: auto !important; max-width: none !important; height: auto !important; }
+.nvfd-mounted .main-nowPlayingBar-right { flex: 0 0 auto !important; width: auto !important; min-width: 0 !important; }
+.nvfd-mounted [data-testid="player-controls"] { width: 100% !important; max-width: none !important; gap: 0 !important; }
+
+/* Divisiones verticales entre bloques */
+.nvfd-mounted .main-nowPlayingBar-center,
+.nvfd-mounted .main-nowPlayingBar-right { position: relative; padding-left: 12px; }
+.nvfd-mounted .main-nowPlayingBar-center::before,
+.nvfd-mounted .main-nowPlayingBar-right::before {
+  content: ""; position: absolute; left: 0; top: 8px; bottom: 8px; width: 1px; background: var(--nvfd-border);
+}
+
+/* Progreso: línea fina debajo del display */
+.nvfd-mounted .playback-bar { width: 100% !important; max-width: none !important; height: 14px; }
+
+/* Botones de la derecha con el mismo estilo VFD */
+.nvfd-mounted .main-nowPlayingBar-right button {
+  color: var(--nvfd-accent) !important;
+  opacity: 0.6;
+  filter: drop-shadow(0 0 2px var(--nvfd-accent));
+  transition: opacity 140ms;
+}
+.nvfd-mounted .main-nowPlayingBar-right button svg { fill: currentColor !important; }
+.nvfd-mounted .main-nowPlayingBar-right button:hover { opacity: 1; filter: drop-shadow(0 0 6px var(--nvfd-accent)); }
+.nvfd-mounted .main-nowPlayingBar-right button[aria-pressed="true"] {
+  color: var(--nvfd-accent-2) !important; opacity: 1;
+  filter: drop-shadow(0 0 3px var(--nvfd-accent-2));
+}
+
+/* Volumen: ancho fijo y barra cian, como las del display */
+.nvfd-mounted [data-testid="volume-bar"] { flex: 0 0 110px !important; width: 110px !important; }
+.nvfd-mounted .main-nowPlayingBar-right .x-progressBar-fillColor { background-color: var(--nvfd-accent) !important; box-shadow: 0 0 6px rgba(0, 240, 255, 0.4); }
+.nvfd-mounted .main-nowPlayingBar-right .x-progressBar-progressBarBg { background-color: var(--nvfd-border) !important; }
+
+/* ================================================================ NEON en todo el tema
+   Regla: todo oscuro por defecto; el neón se enciende solo en lo activo, lo
+   seleccionado o al pasar el mouse (como un estéreo encendido de noche).
+   Probado en vivo en Spotify 1.3.3. Selectores estables: #global-nav-bar,
+   #Desktop_LeftSidebar_Id, #main-view, aside#Desktop_PanelContainer_Id y
+   [data-encore-id=chip|card|listRow|listRowTitle|formInput|buttonPrimary]. */
+
+/* ---- Paneles: negro carbón con borde tenue y sombra interior (cristal del display) */
+#Desktop_LeftSidebar_Id > div,
+#main-view,
+aside#Desktop_PanelContainer_Id {
+  background-color: var(--nvfd-bg) !important;
+  border: 1px solid var(--nvfd-border);
+  box-shadow: inset 0 0 32px rgba(0, 0, 0, 0.6);
+}
+/* Scanlines muy suaves sobre el panel central */
+#main-view { position: relative; }
+#main-view::after {
+  content: ""; position: absolute; inset: 0; pointer-events: none; z-index: 1;
+  border-radius: inherit;
+  background: repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.018) 0 1px, transparent 1px 3px);
+}
+
+/* ---- Títulos: Orbitron; el título grande de cada página con un brillo leve */
+[data-encore-id="listRowTitle"],
+#main-view h1 {
+  font-family: var(--nvfd-font-display) !important;
+  letter-spacing: 0.03em;
+}
+#main-view h1 { text-shadow: 0 0 18px rgba(0, 240, 255, 0.25); }
+
+/* ---- Chips (Todo, Música, Podcasts…): píldoras con borde; la elegida encendida */
+[data-encore-id="chip"] > span {
+  background: transparent !important;
+  border: 1px solid var(--nvfd-border);
+  color: var(--nvfd-muted) !important;
+  font-family: var(--nvfd-font-mono) !important;
+  font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase;
+  transition: border-color var(--nvfd-dur-fast), color var(--nvfd-dur-fast), box-shadow var(--nvfd-dur);
+}
+[data-encore-id="chip"]:hover > span { border-color: var(--nvfd-border-strong); color: var(--nvfd-text) !important; }
+[data-encore-id="chip"][aria-checked="true"] > span {
+  background: var(--nvfd-accent) !important; border-color: var(--nvfd-accent);
+  color: #04141a !important; box-shadow: var(--nvfd-glow);
+}
+
+/* ---- Accesos rápidos del inicio: tarjeta oscura con borde que se enciende */
+.view-homeShortcutsGrid-main {
+  background-color: var(--nvfd-surface) !important;
+  border: 1px solid var(--nvfd-border);
+  border-radius: var(--nvfd-radius-sm);
+  transition: border-color var(--nvfd-dur), box-shadow var(--nvfd-dur);
+}
+.view-homeShortcutsGrid-main:hover { border-color: var(--nvfd-accent); box-shadow: var(--nvfd-glow); }
+
+/* ---- Cards: al pasar el mouse, borde tenue y portada con glow cian
+   (Spotify usa las dos marcas según la vista) */
+[data-encore-id="card"],
+.main-card-card {
+  border: 1px solid transparent; border-radius: var(--nvfd-radius);
+  transition: border-color var(--nvfd-dur), background-color var(--nvfd-dur);
+}
+[data-encore-id="card"]:hover,
+.main-card-card:hover { background-color: var(--nvfd-surface) !important; border-color: var(--nvfd-border); }
+[data-encore-id="card"]:hover img,
+.main-card-card:hover .main-cardImage-imageWrapper { box-shadow: var(--nvfd-glow); }
+
+/* ---- Buscador: caja negra con borde; se enciende al escribir */
+[data-encore-id="formInput"] {
+  background-color: var(--nvfd-bg) !important;
+  border: 1px solid var(--nvfd-border) !important;
+  box-shadow: none !important;
+}
+[data-encore-id="formInput"]:hover { border-color: var(--nvfd-border-strong) !important; }
+[data-encore-id="formInput"]:focus { border-color: var(--nvfd-accent) !important; box-shadow: var(--nvfd-glow) !important; }
+
+/* ---- Íconos de la barra superior: cian tenue que brilla al pasar el mouse */
+#global-nav-bar button:not(:has(img)) {
+  color: var(--nvfd-accent) !important; opacity: 0.65;
+  transition: opacity var(--nvfd-dur-fast), filter var(--nvfd-dur);
+}
+#global-nav-bar button:not(:has(img)):hover { opacity: 1; filter: drop-shadow(0 0 6px var(--nvfd-accent)); }
+#global-nav-bar button svg { fill: currentColor !important; }
+
+/* ---- Biblioteca (izquierda): fila con barra cian al pasar / seleccionada */
+[data-encore-id="listRow"] { transition: box-shadow var(--nvfd-dur-fast); }
+[data-encore-id="listRow"]:hover,
+[data-encore-id="listRow"][aria-selected="true"] { box-shadow: inset 3px 0 0 var(--nvfd-accent); }
+
+/* ---- Botón de play grande: el único con glow propio */
+[data-encore-id="buttonPrimary"]:hover > span { box-shadow: var(--nvfd-glow); }
+
+/* ---- Barras de desplazamiento: finas, cian tenue */
+.os-scrollbar-handle { background: rgba(0, 240, 255, 0.22) !important; }
+.os-scrollbar-handle:hover, .os-scrollbar-handle.active { background: rgba(0, 240, 255, 0.45) !important; }
+
+/* ---- Spicy Lyrics: el fondo con colores de la portada se oscurece (resplandor
+   de fondo, no pared de color); vale para el panel derecho y la pantalla completa */
+canvas.spicy-dynamic-bg { filter: brightness(0.32) saturate(0.8) !important; }
+
+/* Letras: la línea que se canta brilla en cian (segmento encendido); las demás, fantasma */
+.SpicyLyricsScrollContainer .line.Active { filter: drop-shadow(0 0 6px rgba(0, 240, 255, 0.6)); }
+.SpicyLyricsScrollContainer .line.NotSung { opacity: 0.35 !important; }
+
+/* ---- Pantalla de letras (Spicy Lyrics): título en Orbitron con brillo leve,
+   artista como etiqueta ámbar del display, portada con marco encendido */
+#SpicyLyricsPage .SongName {
+  font-family: var(--nvfd-font-display) !important;
+  letter-spacing: 0.03em;
+  text-shadow: 0 0 14px rgba(0, 240, 255, 0.35);
+}
+#SpicyLyricsPage .Artists {
+  font-family: var(--nvfd-font-mono) !important;
+  text-transform: uppercase; letter-spacing: 0.14em;
+  color: var(--nvfd-accent-2) !important; opacity: 0.9;
+}
+#SpicyLyricsPage .MediaImageContainer {
+  border: 1px solid var(--nvfd-border);
+  box-shadow: var(--nvfd-glow);
+}
+/* Scanlines sobre toda la vista, como el cristal de un display */
+#SpicyLyricsPage .ContentBox { position: relative; }
+#SpicyLyricsPage .ContentBox::after {
+  content: ""; position: absolute; inset: 0; pointer-events: none; z-index: 5;
+  background: repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.025) 0 1px, transparent 1px 3px);
+}
+/* En pantalla grande la línea activa brilla un poco más */
+#SpicyLyricsPage .line.Active { filter: drop-shadow(0 0 10px rgba(0, 240, 255, 0.65)); }
+
+/* Ventana angosta: el display se compacta. */
+@media (max-width: 1100px) {
+  .nvfd { grid-template-columns: auto minmax(150px, 1fr) auto; }
+  .nvfd-levels { display: none; }
+  .nvfd-flags .nvfd-flag:not(.on) { display: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nvfd-flash .nvfd-host { animation: none; }
+}
