@@ -93,7 +93,8 @@ $env:ELECTRON = "ruta\a\electron.exe"; node test/check.mjs
 
 ## Créditos y licencias
 
-- Código bajo licencia [MIT](LICENSE).
+- Código bajo licencia [MIT](LICENSE). Las fuentes de `fonts/` no están bajo MIT
+  sino bajo su propia licencia (abajo).
 - Diseño: estilo NEON//VFD del Cordero Design System, de Pedro.
 - Fuentes bajo la [SIL Open Font License 1.1](fonts/LICENSE-Orbitron.txt):
   [Orbitron](https://github.com/theleagueof/orbitron),
