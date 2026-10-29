@@ -94,6 +94,9 @@ try {
   await check('los tiempos originales de Spotify se ocultan', async () => {
     assert.equal(await evaluate("getComputedStyle(document.querySelector('[data-testid=playback-position]')).visibility"), 'hidden');
   });
+  await check('sin portada ni nombre a la izquierda de la barra', async () => {
+    assert.equal(await evaluate("getComputedStyle(document.querySelector('.main-nowPlayingBar-left')).display"), 'none');
+  });
   await shot('playing');
 
   await check('pausa: se apaga PLAY y se enciende PAUSE', async () => {

@@ -96,7 +96,9 @@ input,
 .nvfd-host { color: var(--nvfd-accent); }
 
 .nvfd .seg16 { display: block; height: 26px; width: auto; max-width: 100%; overflow: visible; filter: drop-shadow(0 0 3px currentColor); }
-.nvfd .seg16 .seg { fill: currentColor; opacity: 0.08; transition: opacity var(--nvfd-dur-fast) linear; }
+/* Sin transición: cada paso de la marquesina cambia cientos de segmentos, y un
+   VFD real enciende y apaga al instante. */
+.nvfd .seg16 .seg { fill: currentColor; opacity: 0.08; }
 .nvfd .seg16 .seg.on { opacity: 1; }
 
 /* Matriz de puntos (kanji, kana, hangul): misma altura y brillo que los segmentos. */
@@ -203,16 +205,16 @@ input,
 }
 .nvfd-mounted [data-testid="now-playing-bar"] { height: auto !important; }
 
-/* Izquierda angosta, centro se estira, derecha a su tamaño */
-.nvfd-mounted .main-nowPlayingBar-left { flex: 0 1 260px !important; width: auto !important; min-width: 160px; }
+/* Sin portada ni nombre a la izquierda: ya salen en grande en el panel derecho y
+   el display muestra la canción. El centro se estira, la derecha a su tamaño. */
+.nvfd-mounted .main-nowPlayingBar-left { display: none !important; }
 .nvfd-mounted .main-nowPlayingBar-center { flex: 1 1 auto !important; width: auto !important; max-width: none !important; height: auto !important; }
 .nvfd-mounted .main-nowPlayingBar-right { flex: 0 0 auto !important; width: auto !important; min-width: 0 !important; }
 .nvfd-mounted [data-testid="player-controls"] { width: 100% !important; max-width: none !important; gap: 0 !important; }
 
-/* Divisiones verticales entre bloques */
-.nvfd-mounted .main-nowPlayingBar-center,
+/* División vertical entre el display y los botones de la derecha */
+.nvfd-mounted .main-nowPlayingBar-center { position: relative; }
 .nvfd-mounted .main-nowPlayingBar-right { position: relative; padding-left: 12px; }
-.nvfd-mounted .main-nowPlayingBar-center::before,
 .nvfd-mounted .main-nowPlayingBar-right::before {
   content: ""; position: absolute; left: 0; top: 8px; bottom: 8px; width: 1px; background: var(--nvfd-border);
 }

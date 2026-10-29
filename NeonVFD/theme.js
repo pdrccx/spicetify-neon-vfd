@@ -443,13 +443,20 @@ function createMeter(canvas) {
   let levels = new Array(BARS).fill(0);
   let segments = null;
   let frame = null;
+  let lastDraw = 0;
+  let palette = null;
 
+  // Los colores se leen una sola vez: getComputedStyle en cada cuadro obliga a
+  // Spotify a recalcular los estilos de toda la página 60 veces por segundo.
   function colors() {
-    const css = getComputedStyle(canvas);
-    return {
-      on: css.getPropertyValue('--nvfd-accent').trim() || '#00f0ff',
-      peak: css.getPropertyValue('--nvfd-accent-2').trim() || '#ff9d3d',
-    };
+    if (!palette) {
+      const css = getComputedStyle(canvas);
+      palette = {
+        on: css.getPropertyValue('--nvfd-accent').trim() || '#00f0ff',
+        peak: css.getPropertyValue('--nvfd-accent-2').trim() || '#ff9d3d',
+      };
+    }
+    return palette;
   }
 
   function draw() {
@@ -484,8 +491,14 @@ function createMeter(canvas) {
     return segments[lo];
   }
 
-  function tick() {
-    if (segments?.length && sp.isPlaying()) {
+  function tick(now) {
+    // Sin análisis no hay nada que mover: el ciclo se apaga solo.
+    if (!segments) { frame = null; levels.fill(0); draw(); return; }
+    frame = requestAnimationFrame(tick);
+    // ~30 cuadros por segundo bastan para un medidor de bloques.
+    if (now - lastDraw < 33) return;
+    lastDraw = now;
+    if (sp.isPlaying()) {
       const seg = segmentAt(sp.progress() / 1000);
       // loudness_max va de ~-60 dB (silencio) a 0 dB (máximo).
       const loud = Math.min(1, Math.max(0, (seg.loudness_max + 40) / 40));
@@ -497,7 +510,6 @@ function createMeter(canvas) {
       levels = levels.map((l) => l * 0.88);
     }
     draw();
-    frame = requestAnimationFrame(tick);
   }
 
   return {
@@ -512,7 +524,7 @@ function createMeter(canvas) {
       return segments !== null;
     },
     start() {
-      if (frame || !motionAllowed()) return;
+      if (frame || !segments || !motionAllowed()) return;
       frame = requestAnimationFrame(tick);
     },
     stop() {
@@ -656,6 +668,7 @@ function createFittingDisplay(host, { min = 8, max = 40 } = {}) {
     };
   }
 
+  let shownTime = '';
   function paintTime() {
     if (!current()) return;
     const progress = sp.progress();
@@ -663,6 +676,9 @@ function createFittingDisplay(host, { min = 8, max = 40 } = {}) {
     const value = showRemaining && duration > 0
       ? `-${sp.formatTime(duration - progress)}`
       : sp.formatTime(progress);
+    // "onprogress" llega varias veces por segundo: solo se repinta si cambió.
+    if (value === shownTime) return;
+    shownTime = value;
     segTime.setText(value, { align: 'right' });
   }
 
@@ -715,6 +731,7 @@ function createFittingDisplay(host, { min = 8, max = 40 } = {}) {
     if (!song) {
       showMain('NO DISC');
       segTime.setText('-:--', { align: 'right' });
+      shownTime = '-:--';
       return;
     }
     showMain(`${song.artist} - ${song.title}`, { scroll: true });
@@ -722,6 +739,7 @@ function createFittingDisplay(host, { min = 8, max = 40 } = {}) {
     paintFlags();
     const ok = await meter.load(song.uri);
     vfd.classList.toggle('nvfd-no-analysis', !ok);
+    if (ok) paintFlags(); // arranca el medidor ahora que hay análisis
   }
 
   // Avisos de Spicetify (si su API está roto, el repaso de cada segundo los cubre).
