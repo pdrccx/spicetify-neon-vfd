@@ -1,6 +1,6 @@
 {
   "name": "NEON//VFD",
-  "description": "Turns the playback bar into a 2000s car stereo VFD: 16-segment text with ghost segments and marquee, built-in controls, dot-matrix for Japanese/Korean, dark charcoal with cyan neon.",
+  "description": "Display VFD de autoestéreo de los 2000 en la barra de Spotify: 16 segmentos, controles integrados y neón cian. / 2000s car stereo VFD display: 16-segment marquee, built-in controls, cyan neon.",
   "preview": "preview.png",
   "readme": "README.md",
   "usercss": "NeonVFD/user.css",
