@@ -93,6 +93,7 @@ $env:ELECTRON = "ruta\a\electron.exe"; node test/check.mjs
 
 ## Créditos y licencias
 
+- Código bajo licencia [MIT](LICENSE).
 - Diseño: estilo NEON//VFD del Cordero Design System, de Pedro.
 - Fuentes bajo la [SIL Open Font License 1.1](fonts/LICENSE-Orbitron.txt):
   [Orbitron](https://github.com/theleagueof/orbitron),
